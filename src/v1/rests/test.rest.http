@@ -1,0 +1,5 @@
+@urlDev=http://localhost:3001
+
+### checkStatus
+
+GET {{urlDev}}/checkstatus
