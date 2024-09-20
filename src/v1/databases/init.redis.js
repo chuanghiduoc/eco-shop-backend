@@ -1,17 +1,17 @@
-const mongoose = require('mongoose')
+const { createClient } = require('redis');
+const client= createClient({
+    url: process.env.REDIS_URL
+});
+client.ping(function (err, result) {
+    console.log(result);
+})
 
-//connect mongoose
-mongoose.connect( process.env.MONGO_URI).then( _ => console.log('Connected mongoose success!...'))
-.catch( err => console.error(`Error: connect:::`, err))
+client.on('connect', () => {
+    console.log('Redis client connected');
+});
 
-// all executed methods log output to console
-mongoose.set('debug', true)
-    
-// disable colors in debug mode
-mongoose.set('debug', { color: false })
+client.on("error", (error) => {
+    console.error(error);
+});
 
-// get mongodb-shell friendly output (ISODate)
-mongoose.set('debug', { shell: true })
-
-
-module.exports = mongoose;
+module.exports = client
