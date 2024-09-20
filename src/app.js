@@ -1,5 +1,7 @@
-const express = require('express');
-const app = express();
+const express = require('express')
+const cors = require('cors')
+const cookieParser = require('cookie-parser')
+const app = express()
 const helmet = require('helmet')
 const morgan = require('morgan')
 const compression = require('compression')
@@ -19,9 +21,12 @@ app.use(express.json())
 app.use(express.urlencoded({
     extended: true
 }))
+app.use(cookieParser());
 
+// cors
+app.use(cors());
 //router
-app.use(require('./v1/routes/index.router'))
+app.use('/api/v1', require('./v1/routes/index.router'))
 
 // Error Handling Middleware called
 

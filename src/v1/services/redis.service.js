@@ -1,4 +1,4 @@
-const client = require('../databases/init.mongodb')
+const client = require('../databases/init.redis')
 const { promisify } = require("util")
 
 const REDIS_GET = promisify(client.get).bind(client);
