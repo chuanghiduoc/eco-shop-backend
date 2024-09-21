@@ -1,4 +1,5 @@
 const orderService = require('../services/order.service');
+const redisClient = require('../databases/init.redis'); 
 
 const createOrder = async (req, res) => {
   const { products, shippingAddress, paymentMethod } = req.body;
@@ -6,6 +7,9 @@ const createOrder = async (req, res) => {
 
   try {
     const newOrder = await orderService.createOrder(userId, products, shippingAddress, paymentMethod);
+
+    await redisClient.del(`orders:${userId}`);
+
     res.status(201).json({
       message: 'success',
       data: newOrder,
@@ -19,10 +23,22 @@ const createOrder = async (req, res) => {
 };
 
 const getAllOrders = async (req, res) => {
-  const userId = req.user.userId; 
+  const userId = req.user.userId;
+  const cacheKey = `orders:${userId}`;
 
   try {
+    const cachedOrders = await redisClient.get(cacheKey);
+    if (cachedOrders) {
+      return res.status(200).json({
+        message: 'success',
+        data: JSON.parse(cachedOrders),
+      });
+    }
+
     const orders = await orderService.getAllOrders(userId);
+
+    await redisClient.set(cacheKey, JSON.stringify(orders), 'EX', 3600);
+
     res.status(200).json({
       message: 'success',
       data: orders,

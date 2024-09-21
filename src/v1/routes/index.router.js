@@ -3,7 +3,13 @@ const userController = require('../controllers/user.controller');
 const productController = require('../controllers/product.controller');
 const orderController = require('../controllers/order.controller');
 const discountController = require('../controllers/discount.controller');
+const paymentController = require('../controllers/payment.controller');
 const authenticateToken = require('../middlewares/auth.middleware');
+
+
+//bank
+const tpbankController = require('../controllers/mainTpbank/tpbank.controller');
+
 const router = express.Router();
 
 router.get('/checkstatus', (req, res, next) => {
@@ -45,5 +51,12 @@ router.get('/discounts/:discountId', authenticateToken, discountController.getDi
 router.post('/orders/createOder', authenticateToken, orderController.createOrder);
 router.get('/orders', authenticateToken, orderController.getAllOrders);
 router.put('/orders/updateOrderStatus', authenticateToken, orderController.updateOrderStatus);
+
+
+//bank history
+router.post('/tpbank/histories', tpbankController.getHistoriesTpbank);
+
+//payment
+router.post('/payment/verify', authenticateToken, paymentController.verifyPayment);
 
 module.exports = router;

@@ -27,6 +27,10 @@ const getAllOrders = async (userId) => {
   return await Order.find({ userId }).populate('products.productId');
 };
 
+const getOrderById = async (orderId) => {
+  return await Order.findById(orderId);
+};
+
 const updateOrderStatus = async (orderId, status) => {
   return await Order.findByIdAndUpdate(orderId, { status }, { new: true });
 };
@@ -35,4 +39,5 @@ module.exports = {
   createOrder,
   getAllOrders,
   updateOrderStatus,
+  getOrderById
 };

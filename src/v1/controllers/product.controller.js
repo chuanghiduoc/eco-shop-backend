@@ -1,4 +1,5 @@
 const productService = require('../services/product.service');
+const redisClient = require('../databases/init.redis'); 
 
 const createProduct = async (req, res) => {
   try {
@@ -14,6 +15,8 @@ const createProduct = async (req, res) => {
 
     const newProduct = await productService.createProduct(productData);
 
+    await redisClient.del('products');
+
     res.status(201).json({
       message: 'success',
       data: newProduct,
@@ -27,8 +30,20 @@ const createProduct = async (req, res) => {
 };
 
 const getAllProducts = async (req, res) => {
+  const cacheKey = 'products';
+
   try {
+    const cachedProducts = await redisClient.get(cacheKey);
+    if (cachedProducts) {
+      return res.status(200).json({
+        message: 'success',
+        data: JSON.parse(cachedProducts),
+      });
+    }
+
     const products = await productService.getAllProducts();
+
+    await redisClient.set(cacheKey, JSON.stringify(products), 'EX', 3600);
 
     res.status(200).json({
       message: 'success',
@@ -41,18 +56,20 @@ const getAllProducts = async (req, res) => {
     });
   }
 };
+
 const deleteProduct = async (req, res) => {
   const { productId } = req.params;
 
   try {
     const deletedProduct = await productService.deleteProduct(productId);
-
     if (!deletedProduct) {
       return res.status(404).json({
         message: 'failed',
         details: { message: 'Product not found' },
       });
     }
+
+    await redisClient.del('products');
 
     res.status(200).json({
       message: 'success',
@@ -77,6 +94,8 @@ const createNewReview = async (req, res) => {
   try {
     const updatedProduct = await productService.createNewReview(productId, reviewData);
 
+    await redisClient.del(`product:${productId}`);
+
     res.status(200).json({
       message: 'success',
       data: updatedProduct,
@@ -95,9 +114,39 @@ const createNewReview = async (req, res) => {
   }
 };
 
+const getProductsWithDiscounts = async (req, res) => {
+  const discountId = req.params.discountId;
+  const cacheKey = `products:discount:${discountId}`;
+
+  try {
+    const cachedProducts = await redisClient.get(cacheKey);
+    if (cachedProducts) {
+      return res.status(200).json({
+        message: 'success',
+        data: JSON.parse(cachedProducts),
+      });
+    }
+
+    const products = await productService.getProductsByDiscount(discountId);
+
+    await redisClient.set(cacheKey, JSON.stringify(products), 'EX', 3600);
+
+    res.status(200).json({
+      message: 'success',
+      data: products,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: 'failed',
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
   deleteProduct,
-  createNewReview
+  createNewReview,
+  getProductsWithDiscounts
 };

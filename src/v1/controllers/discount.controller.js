@@ -1,5 +1,6 @@
 const discountService = require('../services/discount.service');
 const productService = require('../services/product.service');
+const redisClient = require('../databases/init.redis'); 
 
 const createDiscount = async (req, res) => {
   try {
@@ -11,6 +12,8 @@ const createDiscount = async (req, res) => {
       await productService.updateProductsWithDiscount(discountData.productList, newDiscount._id);
     }
 
+    await redisClient.del('discounts:all');
+    
     res.status(201).json({
       message: 'success',
       data: newDiscount,
@@ -24,8 +27,21 @@ const createDiscount = async (req, res) => {
 };
 
 const getAllDiscounts = async (req, res) => {
+  const cacheKey = 'discounts:all';
+
   try {
+    const cachedDiscounts = await redisClient.get(cacheKey);
+    if (cachedDiscounts) {
+      return res.status(200).json({
+        message: 'success',
+        data: JSON.parse(cachedDiscounts),
+      });
+    }
+
     const discounts = await discountService.getAllDiscounts();
+
+    await redisClient.set(cacheKey, JSON.stringify(discounts), 'EX', 3600);
+
     res.status(200).json({
       message: 'success',
       data: discounts,

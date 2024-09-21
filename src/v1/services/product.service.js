@@ -30,6 +30,14 @@ const removeDiscountFromProducts = async (discountId) => {
     { $unset: { discount: "" } }
   );
 };
+const getProductsByDiscount = async (discountId) => {
+  try {
+    const products = await Product.find({ discountId: discountId });
+    return products;
+  } catch (error) {
+    throw new Error(`Error retrieving products: ${error.message}`);
+  }
+};
 const updateProductsWithDiscount = async (productIds, discountId) => {
   const updatedProducts = await Product.updateMany(
     { _id: { $in: productIds } },
@@ -47,4 +55,5 @@ module.exports = {
   createNewReview,
   removeDiscountFromProducts,
   updateProductsWithDiscount,
+  getProductsByDiscount
 };
