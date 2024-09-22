@@ -2,6 +2,7 @@ const Order = require('../models/order.model');
 const User = require('../models/user.model');
 
 const createOrder = async (userId, shippingAddress, paymentMethod) => {
+  
   const user = await User.findById(userId).populate('cart.productId');
 
   if (!user || !user.cart || user.cart.length === 0) {

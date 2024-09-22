@@ -14,6 +14,10 @@ const YAML = require('yaml')
 require('./v1/databases/init.mongodb')
 require('./v1/databases/init.redis')
 
+
+//logger
+const logger = require('./v1/utils/logger')
+
 //user middleware
 app.use(helmet())
 app.use(morgan('combined'))
@@ -41,13 +45,19 @@ app.use(cors({
   }));
 app.use(cors());
 
+// Logging middleware
+app.use((req, res, next) => {
+    logger.info(`Incoming request: ${req.method} ${req.url}`);
+    next();
+});
+
+
 //router
 app.use('/api/v1', require('./v1/routes/index.router'))
 
 //swagger
 const file  = fs.readFileSync(path.resolve(__dirname, 'swagger.yaml'), 'utf8')
 const swaggerDocument = YAML.parse(file)
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Error Handling Middleware called
@@ -61,6 +71,7 @@ app.use((req, res, next) => {
 
 // error handler middleware
 app.use((error, req, res, next) => {
+    logger.error(`Error: ${error.message}, Status: ${error.status}`);
     res.status(error.status || 500).send({
         error: {
             status: error.status || 500,

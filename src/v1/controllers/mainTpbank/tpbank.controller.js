@@ -54,7 +54,6 @@ const getHistoriesTpbank = async (req, res) => {
   }
 };
 
-// setInterval(getHistoriesTpbank, 60000);
 
 module.exports = {
   getHistoriesTpbank

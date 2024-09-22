@@ -750,12 +750,28 @@ paths:
                     properties:
                       productId:
                         type: string
+                        description: The ID of the product
+                        example: "60d0fe4f5311236168a109ca"
                       quantity:
                         type: integer
+                        description: The quantity of the product
+                        example: 2
+                      selectedColor:
+                        type: string
+                        description: The selected color of the product
+                        example: "red"
+                      selectedSize:
+                        type: string
+                        description: The selected size of the product
+                        example: "M"
                 shippingAddress:
                   type: string
+                  description: The address to which the order will be shipped
+                  example: "123 Main St, City, Country"
                 paymentMethod:
                   type: string
+                  description: The payment method used for the order
+                  example: "Credit Card"
       responses:
         '201':
           description: Order created successfully
@@ -766,10 +782,23 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: "success"
                   data:
                     type: object
+                    description: The created order details
         '400':
           description: Failed to create order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "failed"
+                  details:
+                    type: string
+                    example: "Error details here"
 
   /orders:
     get:
