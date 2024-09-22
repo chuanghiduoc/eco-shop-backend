@@ -6,9 +6,14 @@ const discountController = require('../controllers/discount.controller');
 const paymentController = require('../controllers/payment.controller');
 const authenticateToken = require('../middlewares/auth.middleware');
 
-
 //bank
 const tpbankController = require('../controllers/mainTpbank/tpbank.controller');
+
+//validation
+const { createUserValidator, loginValidator, updateUserValidator, updatePasswordValidator } = require('../validators/user.validator');
+const createProductValidator = require('../validators/product.validator');
+const { createOrderValidator, updateOrderStatusValidator } = require('../validators/order.validator');
+const { createDiscountValidator, updateDiscountValidator } = require('../validators/discount.validator');
 
 const router = express.Router();
 
@@ -19,13 +24,13 @@ router.get('/checkstatus', (req, res, next) => {
     })
 })
 //user routes
-router.post('/users/register', userController.createUser);
-router.post('/users/login', userController.loginUser);
+router.post('/users/register', createUserValidator, userController.createUser);
+router.post('/users/login', loginValidator, userController.loginUser);
 router.post('/users/logout', authenticateToken, userController.logoutUser);
 router.post('/users/refresh', userController.refreshToken);
 router.get('/users/me', authenticateToken, userController.getUserInfo);
-router.put('/users/me', authenticateToken, userController.updateUserInfo);
-router.put('/users/update-password', authenticateToken, userController.updatePassword);
+router.put('/users/me/update', authenticateToken, updateUserValidator, userController.updateUserInfo);
+router.put('/users/update-password', authenticateToken, updatePasswordValidator, userController.updatePassword);
 router.put('/users/update-address', authenticateToken, userController.updateAddress);
 router.delete('/users/delete-address', authenticateToken, userController.deleteAddress);
 
@@ -36,21 +41,22 @@ router.post('/users/wishlist', authenticateToken, userController.addWishlist);
 router.delete('/users/wishlist', authenticateToken, userController.removeWishlist);
 
 //product routes
-router.post('/products/addProduct', authenticateToken, productController.createProduct);
+router.post('/products/addProduct', authenticateToken, createProductValidator, productController.createProduct);
 router.get('/products', authenticateToken, productController.getAllProducts);
 router.delete('/products/:productId', authenticateToken, productController.deleteProduct);
+router.get('/products/discount/:discountId', authenticateToken, productController.getProductsWithDiscounts);
 
 //discount routes
-router.post('/discounts/addDiscount', authenticateToken, discountController.createDiscount);
+router.post('/discounts/addDiscount', authenticateToken, createDiscountValidator, discountController.createDiscount);
 router.get('/discounts', authenticateToken, discountController.getAllDiscounts);
-router.delete('/discounts/:discountId', authenticateToken, discountController.deleteDiscount);
-router.put('/discounts/updateDiscount/:discountId', authenticateToken, discountController.updateDiscount);
+router.delete('/discounts/deleteDiscount/:discountId', authenticateToken, discountController.deleteDiscount);
+router.put('/discounts/updateDiscount/:discountId', authenticateToken, updateDiscountValidator, discountController.updateDiscount);
 router.get('/discounts/:discountId', authenticateToken, discountController.getDiscountById);
 
 //oder routes
-router.post('/orders/createOder', authenticateToken, orderController.createOrder);
+router.post('/orders/createOder', authenticateToken, createOrderValidator, orderController.createOrder);
 router.get('/orders', authenticateToken, orderController.getAllOrders);
-router.put('/orders/updateOrderStatus', authenticateToken, orderController.updateOrderStatus);
+router.put('/orders/updateOrderStatus', authenticateToken, updateOrderStatusValidator, orderController.updateOrderStatus);
 
 
 //bank history

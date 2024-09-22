@@ -12,7 +12,14 @@ const createProduct = async (req, res) => {
         details: 'Discount must be a valid ObjectId referencing the Discount schema',
       });
     }
-
+    
+    if (productData.discount && !mongoose.Types.ObjectId.isValid(productData.discount)) {
+      return res.status(400).json({
+        message: 'failed',
+        details: 'Discount must be a valid ObjectId referencing the Discount schema',
+      });
+    }
+    
     const newProduct = await productService.createProduct(productData);
 
     await redisClient.del('products');

@@ -1,0 +1,831 @@
+openapi: 3.0.0
+info:
+  title: API Documentation
+  version: 1.0.0
+  description: API documentation for eco-shop
+servers:
+  - url: http://localhost:3001/api/v1
+    name: Local development server
+tags:
+  - name: Users
+    description: User management
+  - name: Products
+    description: Product management
+  - name: Discounts
+    description: Discount management
+  - name: Orders
+    description: Order management
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          example: "securePassword123"
+        role:
+          type: string
+          enum: ["user", "admin"]
+          default: "user"
+        isVerified:
+          type: boolean
+          default: false
+        address:
+          type: string
+          example: "123 Main St, City, Country"
+        phoneNumber:
+          type: string
+          example: "+123456789"
+        cart:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        wishlist:
+          type: array
+          items:
+            type: string
+            format: uuid
+        orders:
+          type: array
+          items:
+            type: string
+            format: uuid
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-09-21T10:00:00Z"
+
+    CartItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          default: 1
+        selectedColor:
+          type: string
+        selectedSize:
+          type: string
+
+    Product:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Sample Product"
+        description:
+          type: string
+          example: "This is a sample product description."
+        originalPrice:
+          type: number
+          example: 100.00
+        discount:
+          type: string
+          format: uuid
+        images:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+          example: "Electronics"
+        stock:
+          type: integer
+          example: 50
+        sold_out:
+          type: boolean
+          default: false
+        tags:
+          type: array
+          items:
+            type: string
+        colors:
+          type: array
+          items:
+            type: string
+        sizes:
+          type: array
+          items:
+            type: string
+        ratings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rating'
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-09-21T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2023-09-21T10:00:00Z"
+
+    Rating:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    Order:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        totalAmount:
+          type: number
+          example: 200.00
+        orderDate:
+          type: string
+          format: date-time
+          example: "2023-09-21T10:00:00Z"
+        status:
+          type: string
+          enum: ["Pending", "Shipped", "Delivered", "Cancelled"]
+          default: "Pending"
+        shippingAddress:
+          type: string
+          example: "123 Main St, City, Country"
+        paymentMethod:
+          type: string
+          enum: ["Credit Card", "PayPal", "Cash on Delivery"]
+
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        selectedColor:
+          type: string
+        selectedSize:
+          type: string
+
+    Discount:
+      type: object
+      properties:
+        percent:
+          type: number
+          example: 20
+        startDay:
+          type: string
+          format: date
+          example: "2023-09-21"
+        endDay:
+          type: string
+          format: date
+          example: "2023-09-30"
+        productList:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: boolean
+          default: false
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /checkstatus:
+    get:
+      summary: Check API status
+      responses:
+        '200':
+          description: API is working
+
+  /users/register:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: User already exists
+        '400':
+          description: Failed to create user
+
+  /users/login:
+    post:
+      tags:
+        - Users
+      summary: Log in a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+        '404':
+          description: User not found
+        '401':
+          description: Invalid credentials
+
+  /users/logout:
+    post:
+      tags:
+        - Users
+      summary: Log out a user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+        '404':
+          description: No refresh token found for user
+        '500':
+          description: Failed to logout
+
+  /users/refresh:
+    post:
+      tags:
+        - Users
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Access token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          description: Refresh token is required
+        '403':
+          description: Invalid refresh token
+        '500':
+          description: Failed to refresh token
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get user information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+        '400':
+          description: Failed to get user info
+
+  /users/me/update:
+    put:
+      tags:
+        - Users
+      summary: Update user information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: User information updated successfully
+        '400':
+          description: Failed to update user info
+
+  /users/update-password:
+    put:
+      tags:
+        - Users
+      summary: Update user password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password updated successfully
+        '400':
+          description: Failed to update password
+
+  /users/update-address:
+    put:
+      tags:
+        - Users
+      summary: Update user address
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+      responses:
+        '200':
+          description: Address updated successfully
+        '400':
+          description: Failed to update address
+
+  /users/delete-address:
+    delete:
+      tags:
+        - Users
+      summary: Delete user address
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Address deleted successfully
+        '400':
+          description: Failed to delete address
+
+  /users/cart:
+    post:
+      tags:
+        - Users
+      summary: Add item to cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+                quantity:
+                  type: number
+                selectedColor:
+                  type: string
+                selectedSize:
+                  type: string
+      responses:
+        '200':
+          description: Item added to cart successfully
+        '400':
+          description: Failed to add item to cart
+
+    delete:
+      tags:
+        - Users
+      summary: Remove item from cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+      responses:
+        '200':
+          description: Item removed from cart successfully
+        '400':
+          description: Failed to remove item from cart
+
+  /users/wishlist:
+    post:
+      tags:
+        - Users
+      summary: Add item to wishlist
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+      responses:
+        '200':
+          description: Item added to wishlist successfully
+        '400':
+          description: Failed to add item to wishlist
+
+    delete:
+      tags:
+        - Users
+      summary: Remove item from wishlist
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+      responses:
+        '200':
+          description: Item removed from wishlist successfully
+        '400':
+          description: Failed to remove item from wishlist
+  /products/addProduct:
+    post:
+      tags:
+        - Products
+      summary: Add a new product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                discount:
+                  type: string
+                  description: 'ObjectId of the Discount schema'
+              required:
+                - name
+                - price
+      responses:
+        '201':
+          description: Product created successfully
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Get all products
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Products retrieved successfully
+        '500':
+          description: Internal server error
+
+  /products/{productId}:
+    delete:
+      tags:
+        - Products
+      summary: Delete a product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product deleted successfully
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+
+  /products/discount/{discountId}:
+    get:
+      tags:
+        - Products
+      summary: Get products with a specific discount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: discountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Products with discounts retrieved successfully
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /discounts/addDiscount:
+    post:
+      tags:
+        - Discounts
+      summary: Create a new discount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                percentage:
+                  type: number
+                productList:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - name
+                - percentage
+      responses:
+        '201':
+          description: Discount created successfully
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /discounts:
+    get:
+      tags:
+        - Discounts
+      summary: Get all discounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Discounts retrieved successfully
+        '500':
+          description: Internal server error
+
+  /discounts/{discountId}:
+    get:
+      tags:
+        - Discounts
+      summary: Get discount by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: discountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Discount retrieved successfully
+        '404':
+          description: Discount not found
+        '500':
+          description: Internal server error
+
+  /discounts/updateDiscount/{discountId}:
+    put:
+      tags:
+        - Discounts
+      summary: Update an existing discount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: discountId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                percentage:
+                  type: number
+                productList:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Discount updated successfully
+        '404':
+          description: Discount not found
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /discounts/deleteDiscount/{discountId}:
+    delete:
+      tags:
+        - Discounts
+      summary: Delete a discount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: discountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Discount deleted successfully
+        '404':
+          description: Discount not found
+        '500':
+          description: Internal server error
+
+  /orders/createOrder:
+    post:
+      tags:
+        - Orders
+      summary: Create a new order
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                products:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId:
+                        type: string
+                      quantity:
+                        type: integer
+                shippingAddress:
+                  type: string
+                paymentMethod:
+                  type: string
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: Failed to create order
+
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: Get all orders for a user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Failed to retrieve orders
+
+  /orders/updateOrderStatus:
+    put:
+      tags:
+        - Orders
+      summary: Update the status of an order
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Order status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: Order not found
+        '400':
+          description: Failed to update order status

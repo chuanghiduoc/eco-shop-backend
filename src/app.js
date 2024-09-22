@@ -24,9 +24,31 @@ app.use(express.urlencoded({
 app.use(cookieParser());
 
 // cors
+const allowedOrigins = ['http://localhost:3000',];
+app.use(cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const message = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+        return callback(new Error(message), false);
+      }
+      return callback(null, true);
+    }
+  }));
 app.use(cors());
+
 //router
 app.use('/api/v1', require('./v1/routes/index.router'))
+
+const swaggerUi = require('swagger-ui-express');
+const fs = require("fs")
+const path = require('path')
+const YAML = require('yaml')
+
+const file  = fs.readFileSync(path.resolve(__dirname, 'swagger.yaml'), 'utf8')
+const swaggerDocument = YAML.parse(file)
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Error Handling Middleware called
 
