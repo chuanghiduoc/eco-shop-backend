@@ -1,5 +1,7 @@
 # API Documentation
 
+![image info](./eco-shop-backend.png)
+
 ## OpenAPI Specification
 openapi: 3.0.0
 
