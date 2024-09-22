@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import { sleep } from 'k6';
 
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVkODZhNGI4YTg3ZmRlMDE0M2RmMzEiLCJyb2xlIjoidXNlciIsImlhdCI6MTcyNjkxMTA1MCwiZXhwIjoxNzI2OTExOTUwfQ.V4YNitZX_8rLMY6oia9fcCwq7oFs_zmB07MYCdqMuu4';
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVkODZhNGI4YTg3ZmRlMDE0M2RmMzEiLCJyb2xlIjoidXNlciIsImlhdCI6MTcyNzAwMzQwNSwiZXhwIjoxNzI3MDA0MzA1fQ.Td4wa4cxHbxH9i5FNzJV8oS-ONqhB9Nzl4uLtWRfaGU';
 
 export let options = {
   stages: [

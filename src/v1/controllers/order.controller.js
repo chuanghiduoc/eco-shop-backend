@@ -2,11 +2,11 @@ const orderService = require('../services/order.service');
 const redisClient = require('../databases/init.redis'); 
 
 const createOrder = async (req, res) => {
-  const { products, shippingAddress, paymentMethod } = req.body;
+  const { shippingAddress, paymentMethod } = req.body;
   const userId = req.user.userId;
 
   try {
-    const newOrder = await orderService.createOrder(userId, products, shippingAddress, paymentMethod);
+    const newOrder = await orderService.createOrder(userId, shippingAddress, paymentMethod);
 
     await redisClient.del(`orders:${userId}`);
 

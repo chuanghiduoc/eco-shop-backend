@@ -5,6 +5,10 @@ const app = express()
 const helmet = require('helmet')
 const morgan = require('morgan')
 const compression = require('compression')
+const swaggerUi = require('swagger-ui-express');
+const fs = require("fs")
+const path = require('path')
+const YAML = require('yaml')
 
 //init dbs 
 require('./v1/databases/init.mongodb')
@@ -40,11 +44,7 @@ app.use(cors());
 //router
 app.use('/api/v1', require('./v1/routes/index.router'))
 
-const swaggerUi = require('swagger-ui-express');
-const fs = require("fs")
-const path = require('path')
-const YAML = require('yaml')
-
+//swagger
 const file  = fs.readFileSync(path.resolve(__dirname, 'swagger.yaml'), 'utf8')
 const swaggerDocument = YAML.parse(file)
 

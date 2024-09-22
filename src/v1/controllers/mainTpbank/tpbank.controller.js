@@ -44,7 +44,10 @@ const getHistoriesTpbank = async (req, res) => {
     //Lấy dữ liệu ở trường creditDebitIndicator = CRDT (Nhận tiền), DBIT(Chuyển tiền đi) 
     const filteredTransactions = histories.transactionInfos.filter(transaction => transaction.creditDebitIndicator === 'CRDT');
 
-    return res.json({ info: filteredTransactions });
+    // console.log(filteredTransactions);
+
+    // return res.json({ info: filteredTransactions });
+    return filteredTransactions;
 
   } catch (error) {
     return res.status(error.response ? error.response.status : 500).json({ error: error.message });
