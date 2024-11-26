@@ -1,6 +1,5 @@
 const User = require('../models/user.model');
 const Product = require('../models/product.model');
-const Order = require('../models/order.model');
 
 const bcrypt = require('bcrypt');
 
@@ -39,21 +38,14 @@ const loginUser = async (email, password) => {
 
 const getUserInfo = async (userId) => {
   const user = await User.findById(userId)
-    .populate('cart.productId', 'name price') // Nếu cần lấy thêm thông tin sản phẩm trong giỏ hàng
-    .populate('wishlist', 'name price') // Nếu cần lấy thông tin sản phẩm trong wishlist
-    .populate('orders'); // Nếu cần lấy thông tin đơn hàng
+    .select('-password');
 
   if (!user) {
     throw new Error('User not found');
   }
 
   return {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    cart: user.cart,
-    wishlist: user.wishlist,
-    orders: user.orders,
+user
   };
 };
 
@@ -85,12 +77,12 @@ const updatePassword = async (userId, currentPassword, newPassword) => {
   }
 
   const isMatch = await bcrypt.compare(currentPassword, user.password);
+  
   if (!isMatch) {
     throw new Error('Current password is incorrect');
   }
 
-  const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(newPassword, salt);
+  user.password = newPassword;
 
   await user.save();
 

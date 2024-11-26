@@ -1,13 +1,28 @@
-const Product = require('../models/product.model');
+const Product = require("../models/product.model");
 
 const createProduct = async (productData) => {
   const newProduct = new Product(productData);
   return await newProduct.save();
 };
 
+const getAllProducts = async (page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
 
-const getAllProducts = async () => {
-  return await Product.find().populate('discount');
+  const totalProducts = await Product.countDocuments();
+  const totalPages = Math.ceil(totalProducts / limit);
+
+  const products = await Product.find()
+    .populate("discount")
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  return {
+    products,
+    currentPage: page,
+    totalPages,
+    totalProducts,
+  };
 };
 
 const deleteProduct = async (productId) => {
@@ -17,7 +32,7 @@ const deleteProduct = async (productId) => {
 const createNewReview = async (productId, reviewData) => {
   const product = await Product.findById(productId);
   if (!product) {
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
   product.ratings.push(reviewData);
@@ -34,6 +49,14 @@ const getProductsByDiscount = async (discountId) => {
   try {
     const products = await Product.find({ discountId: discountId });
     return products;
+  } catch (error) {
+    throw new Error(`Error retrieving products: ${error.message}`);
+  }
+};
+const getProductById = async (productId) => {
+  try {
+    const product = await Product.findById(productId);
+    return product;
   } catch (error) {
     throw new Error(`Error retrieving products: ${error.message}`);
   }
@@ -55,5 +78,6 @@ module.exports = {
   createNewReview,
   removeDiscountFromProducts,
   updateProductsWithDiscount,
-  getProductsByDiscount
+  getProductsByDiscount,
+  getProductById,
 };

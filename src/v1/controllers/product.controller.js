@@ -1,64 +1,77 @@
-const productService = require('../services/product.service');
-const redisClient = require('../databases/init.redis'); 
+const productService = require("../services/product.service");
+const redisClient = require("../databases/init.redis");
 
 const createProduct = async (req, res) => {
   try {
     const productData = req.body;
 
     // Kiểm tra nếu có discount thì phải là ObjectId của bảng Discount, không phải là số phần trăm
-    if (productData.discount && typeof productData.discount === 'number') {
+    if (productData.discount && typeof productData.discount === "number") {
       return res.status(400).json({
-        message: 'failed',
-        details: 'Discount must be a valid ObjectId referencing the Discount schema',
+        message: "failed",
+        details:
+          "Discount must be a valid ObjectId referencing the Discount schema",
       });
     }
-    
-    if (productData.discount && !mongoose.Types.ObjectId.isValid(productData.discount)) {
+
+    if (
+      productData.discount &&
+      !mongoose.Types.ObjectId.isValid(productData.discount)
+    ) {
       return res.status(400).json({
-        message: 'failed',
-        details: 'Discount must be a valid ObjectId referencing the Discount schema',
+        message: "failed",
+        details:
+          "Discount must be a valid ObjectId referencing the Discount schema",
       });
     }
-    
+
     const newProduct = await productService.createProduct(productData);
 
-    await redisClient.del('products');
+    await redisClient.del("products");
 
     res.status(201).json({
-      message: 'success',
+      message: "success",
       data: newProduct,
     });
   } catch (error) {
     res.status(400).json({
-      message: 'failed',
+      message: "failed",
       details: error.message,
     });
   }
 };
 
 const getAllProducts = async (req, res) => {
-  const cacheKey = 'products';
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const cacheKey = `products:page:${page}:limit:${limit}`;
 
   try {
     const cachedProducts = await redisClient.get(cacheKey);
+
     if (cachedProducts) {
       return res.status(200).json({
-        message: 'success',
+        message: "success",
         data: JSON.parse(cachedProducts),
       });
     }
 
-    const products = await productService.getAllProducts();
+    const products = await productService.getAllProducts(page, limit);
 
-    await redisClient.set(cacheKey, JSON.stringify(products), 'EX', 3600);
+    await redisClient.set(
+      cacheKey,
+      JSON.stringify(products),
+      "EX",
+      3600 // 1 hour cache
+    );
 
     res.status(200).json({
-      message: 'success',
+      message: "success",
       data: products,
     });
   } catch (error) {
     res.status(500).json({
-      message: 'failed',
+      message: "failed",
       details: error.message,
     });
   }
@@ -71,20 +84,20 @@ const deleteProduct = async (req, res) => {
     const deletedProduct = await productService.deleteProduct(productId);
     if (!deletedProduct) {
       return res.status(404).json({
-        message: 'failed',
-        details: { message: 'Product not found' },
+        message: "failed",
+        details: { message: "Product not found" },
       });
     }
 
-    await redisClient.del('products');
+    await redisClient.del("products");
 
     res.status(200).json({
-      message: 'success',
+      message: "success",
       data: deletedProduct,
     });
   } catch (error) {
     res.status(500).json({
-      message: 'failed',
+      message: "failed",
       details: error.message,
     });
   }
@@ -99,23 +112,26 @@ const createNewReview = async (req, res) => {
   };
 
   try {
-    const updatedProduct = await productService.createNewReview(productId, reviewData);
+    const updatedProduct = await productService.createNewReview(
+      productId,
+      reviewData
+    );
 
     await redisClient.del(`product:${productId}`);
 
     res.status(200).json({
-      message: 'success',
+      message: "success",
       data: updatedProduct,
     });
   } catch (error) {
-    if (error.message === 'Product not found') {
+    if (error.message === "Product not found") {
       return res.status(404).json({
-        message: 'failed',
+        message: "failed",
         details: error.message,
       });
     }
     res.status(400).json({
-      message: 'failed',
+      message: "failed",
       details: error.message,
     });
   }
@@ -129,22 +145,51 @@ const getProductsWithDiscounts = async (req, res) => {
     const cachedProducts = await redisClient.get(cacheKey);
     if (cachedProducts) {
       return res.status(200).json({
-        message: 'success',
+        message: "success",
         data: JSON.parse(cachedProducts),
       });
     }
 
     const products = await productService.getProductsByDiscount(discountId);
 
-    await redisClient.set(cacheKey, JSON.stringify(products), 'EX', 3600);
+    await redisClient.set(cacheKey, JSON.stringify(products), "EX", 3600);
 
     res.status(200).json({
-      message: 'success',
+      message: "success",
       data: products,
     });
   } catch (error) {
     res.status(400).json({
-      message: 'failed',
+      message: "failed",
+      details: error.message,
+    });
+  }
+};
+
+const getProductById = async (req, res) => {
+  const { productId } = req.params;
+  const cacheKey = `product:${productId}`;
+
+  try {
+    const cachedProduct = await redisClient.get(cacheKey);
+    if (cachedProduct) {
+      return res.status(200).json({
+        message: "success",
+        data: JSON.parse(cachedProduct),
+      });
+    }
+
+    const product = await productService.getProductById(productId);
+
+    await redisClient.set(cacheKey, JSON.stringify(product), "EX", 3600);
+
+    res.status(200).json({
+      message: "success",
+      data: product,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "failed",
       details: error.message,
     });
   }
@@ -155,5 +200,6 @@ module.exports = {
   getAllProducts,
   deleteProduct,
   createNewReview,
-  getProductsWithDiscounts
+  getProductsWithDiscounts,
+  getProductById,
 };

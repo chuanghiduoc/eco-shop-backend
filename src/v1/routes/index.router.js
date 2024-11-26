@@ -42,7 +42,8 @@ router.delete('/users/wishlist', authenticateToken, userController.removeWishlis
 
 //product routes
 router.post('/products/addProduct', authenticateToken, createProductValidator, productController.createProduct);
-router.get('/products', authenticateToken, productController.getAllProducts);
+router.get('/products/:productId', productController.getProductById);
+router.get('/products', productController.getAllProducts);
 router.delete('/products/:productId', authenticateToken, productController.deleteProduct);
 router.get('/products/discount/:discountId', authenticateToken, productController.getProductsWithDiscounts);
 

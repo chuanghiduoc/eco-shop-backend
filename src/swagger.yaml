@@ -212,13 +212,6 @@ components:
       scheme: bearer
       bearerFormat: JWT
 paths:
-  /checkstatus:
-    get:
-      summary: Check API status
-      responses:
-        '200':
-          description: API is working
-
   /users/register:
     post:
       tags:
@@ -514,6 +507,7 @@ paths:
           description: Item removed from wishlist successfully
         '400':
           description: Failed to remove item from wishlist
+  
   /products/addProduct:
     post:
       tags:
@@ -532,14 +526,39 @@ paths:
                   type: string
                 description:
                   type: string
-                price:
+                originalPrice:
                   type: number
+                  description: Original price of the product
                 discount:
                   type: string
-                  description: 'ObjectId of the Discount schema'
+                  nullable: true
+                  description: Discount amount (if any)
+                images:
+                  type: array
+                  items:
+                    type: string
+                  description: List of image file names
+                category:
+                  type: string
+                stock:
+                  type: number
+                sold_out:
+                  type: boolean
+                tags:
+                  type: array
+                  items:
+                    type: string
+                colors:
+                  type: array
+                  items:
+                    type: string
+                sizes:
+                  type: array
+                  items:
+                    type: string
               required:
                 - name
-                - price
+                - originalPrice
       responses:
         '201':
           description: Product created successfully
@@ -547,6 +566,7 @@ paths:
           description: Invalid request
         '500':
           description: Internal server error
+
 
   /products:
     get:
@@ -858,3 +878,63 @@ paths:
           description: Order not found
         '400':
           description: Failed to update order status
+  /payment/verify:
+      post:
+        tags:
+          - Payment
+        summary: Verify payment for an order
+        description: |
+          This API verifies the payment status of an order and sends a confirmation message to a Discord webhook if the payment is successful.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+                    example: "66f00f9d2a66ae414978c9b3"
+                  amount:
+                    type: number
+                    example: 2000
+                required:
+                  - orderId
+                  - amount
+        responses:
+          '200':
+            description: Payment verification successful
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Payment verified successfully"
+          '400':
+            description: Bad request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "failed"
+                    details:
+                      type: string
+                      example: "Missing required fields: orderId"
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Error processing payment"
+                    details:
+                      type: string
+                      example: "Error processing payment details"
